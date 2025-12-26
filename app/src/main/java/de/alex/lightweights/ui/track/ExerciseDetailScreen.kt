@@ -13,7 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import de.alex.lightweights.domain.calculateStrenght
+import de.alex.lightweights.domain.calculateStrength
 import de.alex.lightweights.domain.TrainingEntry
 import de.alex.lightweights.ui.components.StrengthChart
 import java.time.LocalDate
@@ -43,7 +43,7 @@ fun ExerciseDetailScreen(
     )
 
     val strengthValues = entries.map {
-        calculateStrenght(it)
+        calculateStrength(it)
     }
 
     Scaffold(
