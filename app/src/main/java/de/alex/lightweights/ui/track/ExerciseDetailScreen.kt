@@ -1,6 +1,8 @@
 package de.alex.lightweights.ui.track
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -11,7 +13,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import de.alex.lightweights.domain.calculateStrenght
+import de.alex.lightweights.domain.TrainingEntry
+import de.alex.lightweights.ui.components.StrengthChart
+import java.time.LocalDate
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseDetailScreen(
@@ -21,6 +28,15 @@ fun ExerciseDetailScreen(
     var weight by remember { mutableStateOf("") }
     var reps by remember { mutableStateOf("") }
     val isValid = weight.isNotBlank() && reps.isNotBlank()
+    val entries = listOf(
+        TrainingEntry("1", LocalDate.now().minusDays(7), 60f, 10),
+        TrainingEntry("1", LocalDate.now().minusDays(5), 62.5f, 8),
+        TrainingEntry("1", LocalDate.now().minusDays(3), 65f, 6),
+    )
+
+    val strengthValues = entries.map {
+        calculateStrenght(it)
+    }
 
     Scaffold(
         topBar = {
@@ -82,18 +98,21 @@ fun ExerciseDetailScreen(
                 Text("Speichern")
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Verlauf",
+                text = "Stärke-Verlauf",
                 style = MaterialTheme.typography.titleMedium
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            TrainingEntryItem(weight = "60", reps = "10")
-            TrainingEntryItem(weight = "62.5", reps = "8")
-            TrainingEntryItem(weight = "65", reps = "6")
+            StrengthChart(
+                values = strengthValues,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+            )
         }
     }
 }
