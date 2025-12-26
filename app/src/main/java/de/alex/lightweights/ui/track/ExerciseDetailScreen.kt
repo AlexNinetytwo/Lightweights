@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import calculateStrength
 import de.alex.lightweights.ui.components.StrengthChart
 
@@ -22,7 +23,7 @@ fun ExerciseDetailScreen(
     exerciseId: String,
     exerciseName: String,
     onBack: () -> Unit,
-    viewModel: ExerciseDetailViewModel = ExerciseDetailViewModel(),
+    viewModel: ExerciseDetailViewModel = viewModel()
 ) {
     var enteredWeight by remember { mutableStateOf("") }
     var enteredReps by remember { mutableStateOf("") }
