@@ -1,7 +1,6 @@
 package de.alex.lightweights.ui.track
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,38 +12,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import de.alex.lightweights.domain.calculateStrength
-import de.alex.lightweights.domain.TrainingEntry
+import calculateStrength
 import de.alex.lightweights.ui.components.StrengthChart
-import java.time.LocalDate
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseDetailScreen(
+    exerciseId: String,
     exerciseName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: ExerciseDetailViewModel = ExerciseDetailViewModel(),
 ) {
-    var weight by remember { mutableStateOf("") }
-    var reps by remember { mutableStateOf("") }
-    val isValid = weight.isNotBlank() && reps.isNotBlank()
-    val entries = listOf(
-        TrainingEntry("1", LocalDate.now().minusDays(23), 50f, 8),
-        TrainingEntry("1", LocalDate.now().minusDays(21), 52f, 8),
-        TrainingEntry("1", LocalDate.now().minusDays(20), 52f, 10),
-        TrainingEntry("1", LocalDate.now().minusDays(18), 54.5f, 9),
-        TrainingEntry("1", LocalDate.now().minusDays(15), 55f, 8),
-        TrainingEntry("1", LocalDate.now().minusDays(13), 55f, 9),
-        TrainingEntry("1", LocalDate.now().minusDays(12), 55f, 10),
-        TrainingEntry("1", LocalDate.now().minusDays(9), 60f, 9),
-        TrainingEntry("1", LocalDate.now().minusDays(7), 63f, 10),
-        TrainingEntry("1", LocalDate.now().minusDays(5), 62.5f, 8),
-        TrainingEntry("1", LocalDate.now().minusDays(3), 65f, 6),
-    )
+    var enteredWeight by remember { mutableStateOf("") }
+    var enteredReps by remember { mutableStateOf("") }
+    val isValid = enteredWeight.isNotBlank() && enteredReps.isNotBlank()
+    val entries by viewModel.entries.collectAsState()
+    val strengthValues = entries
+        .filter { it.exerciseId == exerciseId }
+        .map { calculateStrength(it) }
 
-    val strengthValues = entries.map {
-        calculateStrength(it)
-    }
 
     Scaffold(
         topBar = {
@@ -74,8 +61,8 @@ fun ExerciseDetailScreen(
             )
 
             OutlinedTextField(
-                value = weight,
-                onValueChange = { weight = it },
+                value = enteredWeight,
+                onValueChange = { enteredWeight = it },
                 label = { Text("Gewicht (kg)") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -85,8 +72,8 @@ fun ExerciseDetailScreen(
             )
 
             OutlinedTextField(
-                value = reps,
-                onValueChange = { reps = it },
+                value = enteredReps,
+                onValueChange = { enteredReps = it },
                 label = { Text("Wiederholungen") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -97,8 +84,11 @@ fun ExerciseDetailScreen(
 
             Button(
                 onClick = {
-                    // TODO: später speichern
-                    Log.d("Detail", "Saved $weight kg x $reps")
+                    viewModel.addTrainingEntry(
+                        exerciseId = exerciseId,
+                        weight = enteredWeight.toFloat(),
+                        reps = enteredReps.toInt()
+                    )
                 },
                 enabled = isValid,
                 modifier = Modifier.fillMaxWidth()
