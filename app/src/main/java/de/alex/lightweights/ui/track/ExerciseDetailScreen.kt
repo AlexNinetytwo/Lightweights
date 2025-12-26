@@ -29,7 +29,15 @@ fun ExerciseDetailScreen(
     var reps by remember { mutableStateOf("") }
     val isValid = weight.isNotBlank() && reps.isNotBlank()
     val entries = listOf(
-        TrainingEntry("1", LocalDate.now().minusDays(7), 60f, 10),
+        TrainingEntry("1", LocalDate.now().minusDays(23), 50f, 8),
+        TrainingEntry("1", LocalDate.now().minusDays(21), 52f, 8),
+        TrainingEntry("1", LocalDate.now().minusDays(20), 52f, 10),
+        TrainingEntry("1", LocalDate.now().minusDays(18), 54.5f, 9),
+        TrainingEntry("1", LocalDate.now().minusDays(15), 55f, 8),
+        TrainingEntry("1", LocalDate.now().minusDays(13), 55f, 9),
+        TrainingEntry("1", LocalDate.now().minusDays(12), 55f, 10),
+        TrainingEntry("1", LocalDate.now().minusDays(9), 60f, 9),
+        TrainingEntry("1", LocalDate.now().minusDays(7), 63f, 10),
         TrainingEntry("1", LocalDate.now().minusDays(5), 62.5f, 8),
         TrainingEntry("1", LocalDate.now().minusDays(3), 65f, 6),
     )

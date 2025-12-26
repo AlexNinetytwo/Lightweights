@@ -42,13 +42,13 @@ fun StrengthChart(
             }
 
             val dataSet = LineDataSet(entries, "Strength").apply {
-                color = android.graphics.Color.CYAN
-                lineWidth = 3f
+                color = android.graphics.Color.YELLOW
+                lineWidth = 1f
                 setDrawCircles(true)
-                circleRadius = 4f
+                circleRadius = 2f
                 setDrawValues(false)
-                mode = LineDataSet.Mode.CUBIC_BEZIER
-                setCircleColor(android.graphics.Color.CYAN)
+                mode = LineDataSet.Mode.LINEAR
+                setCircleColor(android.graphics.Color.WHITE)
             }
 
             chart.data = LineData(dataSet)
