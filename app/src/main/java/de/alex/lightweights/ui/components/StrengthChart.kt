@@ -102,7 +102,20 @@ private fun LineChart.configureAxes(
         // NEUER Formatter, der mit Tagen rechnet
         valueFormatter = TimeAxisValueFormatter(initialStartDate)
     }
-    // ... (axisLeft, axisRight bleiben gleich)
+
+    axisLeft.apply {
+        this.textColor = textColor
+        this.gridColor = gridColor
+        setDrawAxisLine(false)
+        axisMinimum = 0f
+
+        // HIER DIE ÄNDERUNG EINFÜGEN:
+        // Diese Zeile sorgt dafür, dass die Werte (Labels) auf der Y-Achse gezeichnet werden.
+        setDrawLabels(true)
+    }
+
+    // Die rechte Y-Achse wird nicht benötigt
+    axisRight.isEnabled = false
 }
 
 private class TimeAxisValueFormatter(var startDate: LocalDate?) : ValueFormatter() {

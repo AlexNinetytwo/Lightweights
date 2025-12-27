@@ -49,14 +49,25 @@ fun ExerciseDetailScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf(TimeFilter.ALL) }
 
-    val filteredChartData by remember(entries, selectedFilter) {
+    val filteredChartData by remember(entries, selectedFilter, exerciseId) {
         derivedStateOf {
-            val allChartData = entries
+            // 1. Filtere nach Übung und sortiere (wichtig für die Chart-Reihenfolge)
+            val dailyAggregatedData = entries
                 .filter { it.exerciseId == exerciseId }
                 .sortedBy { it.date }
-                .map { it.date to calculateStrength(it) }
+                // 2. Gruppiere alle Einträge nach ihrem Datum
+                .groupBy { it.date }
+                // 3. Transformiere die Werte jeder Gruppe:
+                //    Summiere die Stärke aller Einträge für diesen Tag auf.
+                .mapValues { (_, dayEntries) ->
+                    dayEntries.sumOf { calculateStrength(it).toDouble() }.toFloat()
+                }
+                // 4. Konvertiere die Map zurück in eine Liste von Paaren.
+                //    Das Ergebnis ist z.B.: [(2023-09-22, 150.5), (2023-09-24, 160.0)]
+                .toList()
 
-            if (allChartData.isEmpty()) {
+            // Der Filter-Code ab hier bleibt gleich und funktioniert weiterhin perfekt.
+            if (dailyAggregatedData.isEmpty()) {
                 return@derivedStateOf emptyList()
             }
 
@@ -69,9 +80,9 @@ fun ExerciseDetailScreen(
             }
 
             if (limitDate != null) {
-                allChartData.filter { (date, _) -> date.isAfter(limitDate) }
+                dailyAggregatedData.filter { (date, _) -> date.isAfter(limitDate) }
             } else {
-                allChartData
+                dailyAggregatedData
             }
         }
     }
