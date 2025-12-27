@@ -1,8 +1,11 @@
 package de.alex.lightweights.ui.track
 
+import ExerciseItem
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -33,9 +36,10 @@ fun ExerciseDetailScreen(
     var enteredReps by remember { mutableStateOf("") }
     val isValid = enteredWeight.isNotBlank() && enteredReps.isNotBlank()
     val entries by viewModel.entries.collectAsState()
-    val strengthValues = entries
+    val chartData = entries
         .filter { it.exerciseId == exerciseId }
-        .map { calculateStrength(it) }
+        .sortedBy { it.date }
+        .map { it.date to calculateStrength(it) }
 
     val exerciseEntries = entries
         .filter { it.exerciseId == exerciseId }
@@ -132,25 +136,34 @@ fun ExerciseDetailScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            StrengthChart(
-                values = strengthValues,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp)
-            )
-
-            groupedEntries.forEach { (date, dayEntries) ->
-
-                TrainingDayHeader(date = date)
-
-                dayEntries.forEach { entry ->
-                    TrainingEntryItem(
-                        weight = entry.weight,
-                        reps = entry.reps
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 80.dp)
+            ) {
+                item {
+                    StrengthChart(
+                        chartData = chartData,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
                     )
+
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                groupedEntries.forEach { (date, dayEntries) ->
+
+                    item {
+                        TrainingDayHeader(date = date)
+                    }
+
+                    items(dayEntries) { entry ->
+                        TrainingEntryItem(
+                            weight = entry.weight,
+                            reps = entry.reps
+                        )
+                    }
+                }
             }
         }
     }

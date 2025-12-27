@@ -1,6 +1,5 @@
 package de.alex.lightweights
 
-import TrackScreen
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -14,6 +13,7 @@ import androidx.navigation.navArgument
 import de.alex.lightweights.ui.theme.LightweightsTheme
 import de.alex.lightweights.ui.track.AddExerciseScreen
 import de.alex.lightweights.ui.track.ExerciseDetailScreen
+import de.alex.lightweights.ui.track.TrackScreen
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
