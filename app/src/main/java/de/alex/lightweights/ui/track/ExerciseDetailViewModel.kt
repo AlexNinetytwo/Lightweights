@@ -1,20 +1,32 @@
 package de.alex.lightweights.ui.track
 
+import android.app.Application
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
+import de.alex.lightweights.LightweightsApp
+import de.alex.lightweights.data.TrainingEntryDao
 import de.alex.lightweights.data.TrainingEntryDataSource
 import de.alex.lightweights.domain.model.TrainingEntry
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
-class ExerciseDetailViewModel : ViewModel() {
+class ExerciseDetailViewModel(
+    application: Application
+) : AndroidViewModel(application) {
 
-    val entries: StateFlow<List<TrainingEntry>> =
-        TrainingEntryDataSource.entries
+    private val trainingEntryDataSource =
+        TrainingEntryDataSource(
+            (application as LightweightsApp)
+                .database
+                .trainingEntryDao()
+        )
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun addTrainingEntry(
+    val entries: Flow<List<TrainingEntry>> =
+        trainingEntryDataSource.entries
+
+    suspend fun addTrainingEntry(
         exerciseId: String,
         weight: Float,
         reps: Int,
@@ -26,6 +38,6 @@ class ExerciseDetailViewModel : ViewModel() {
             weight = weight,
             reps = reps
         )
-        TrainingEntryDataSource.addEntry(entry)
+        trainingEntryDataSource.addEntry(entry)
     }
 }

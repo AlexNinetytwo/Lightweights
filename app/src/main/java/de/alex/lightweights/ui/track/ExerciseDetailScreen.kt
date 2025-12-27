@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import calculateStrength
 import de.alex.lightweights.ui.components.StrengthChart
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -26,19 +27,19 @@ import java.time.format.DateTimeFormatter
 
 enum class TimeFilter { ALL, YEAR, QUARTER, MONTH }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseDetailScreen(
     exerciseId: String,
     exerciseName: String,
     onBack: () -> Unit,
-    viewModel: ExerciseDetailViewModel = viewModel()
 ) {
+    val viewModel: ExerciseDetailViewModel = viewModel()
+
     var enteredWeight by remember { mutableStateOf("") }
     var enteredReps by remember { mutableStateOf("") }
     val isValid = enteredWeight.isNotBlank() && enteredReps.isNotBlank()
-    val entries by viewModel.entries.collectAsState()
+    val entries by viewModel.entries.collectAsState(emptyList())
 
     val exerciseEntries = entries
         .filter { it.exerciseId == exerciseId }
@@ -48,6 +49,8 @@ fun ExerciseDetailScreen(
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var showDatePicker by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf(TimeFilter.ALL) }
+
+    val scope = rememberCoroutineScope()
 
     val filteredChartData by remember(entries, selectedFilter, exerciseId) {
         derivedStateOf {
@@ -152,12 +155,14 @@ fun ExerciseDetailScreen(
 
             Button(
                 onClick = {
-                    viewModel.addTrainingEntry(
-                        exerciseId = exerciseId,
-                        weight = enteredWeight.toFloat(),
-                        reps = enteredReps.toInt(),
-                        date = selectedDate
-                    )
+                    scope.launch {
+                        viewModel.addTrainingEntry(
+                            exerciseId = exerciseId,
+                            weight = enteredWeight.toFloat(),
+                            reps = enteredReps.toInt(),
+                            date = selectedDate
+                        )
+                    }
                 },
                 enabled = isValid,
                 modifier = Modifier.fillMaxWidth()

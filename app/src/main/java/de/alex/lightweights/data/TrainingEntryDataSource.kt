@@ -1,19 +1,22 @@
 package de.alex.lightweights.data
 
 import de.alex.lightweights.domain.model.TrainingEntry
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 
-object TrainingEntryDataSource {
+class TrainingEntryDataSource(private val dao: TrainingEntryDao) {
 
-    private val _entries = MutableStateFlow<List<TrainingEntry>>(emptyList())
-    val entries: StateFlow<List<TrainingEntry>> = _entries
+    // Der Flow kommt jetzt direkt vom DAO!
+    val entries: Flow<List<TrainingEntry>> = dao.getAllEntries()
 
-    fun addEntry(entry: TrainingEntry) {
-        _entries.value = _entries.value + entry
+    suspend fun addEntry(entry: TrainingEntry) {
+        // Die Logik wird an das DAO delegiert
+        dao.addEntry(entry)
     }
 
-    fun getEntriesForExercise(exerciseId: String): List<TrainingEntry> {
-        return _entries.value.filter { it.exerciseId == exerciseId}
+    // Diese Funktion ist nicht mehr ideal, da sie auf dem letzten Wert des Flows arbeitet.
+    // Es ist besser, Abfragen direkt im DAO zu definieren, wenn sie oft gebraucht werden.
+    // Für den Moment lassen wir sie als Beispiel, aber sie ist nicht mehr reaktiv.
+    fun getEntriesForExercise(exerciseId: String, currentEntries: List<TrainingEntry>): List<TrainingEntry> {
+        return currentEntries.filter { it.exerciseId == exerciseId }
     }
 }
