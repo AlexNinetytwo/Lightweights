@@ -15,6 +15,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import calculateStrength
 import de.alex.lightweights.ui.components.StrengthChart
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +36,14 @@ fun ExerciseDetailScreen(
     val strengthValues = entries
         .filter { it.exerciseId == exerciseId }
         .map { calculateStrength(it) }
+
+    val exerciseEntries = entries
+        .filter { it.exerciseId == exerciseId }
+        .sortedByDescending { it.date }
+
+    val groupedEntries = exerciseEntries.groupBy { it.date }
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
 
     Scaffold(
@@ -83,12 +95,26 @@ fun ExerciseDetailScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            OutlinedButton(
+                onClick = { showDatePicker = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = if (selectedDate == LocalDate.now()) {
+                        "Datum: Heute"
+                    } else {
+                        "Datum: ${selectedDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))}"
+                    }
+                )
+            }
+
             Button(
                 onClick = {
                     viewModel.addTrainingEntry(
                         exerciseId = exerciseId,
                         weight = enteredWeight.toFloat(),
-                        reps = enteredReps.toInt()
+                        reps = enteredReps.toInt(),
+                        date = selectedDate
                     )
                 },
                 enabled = isValid,
@@ -112,26 +138,98 @@ fun ExerciseDetailScreen(
                     .fillMaxWidth()
                     .height(220.dp)
             )
+
+            groupedEntries.forEach { (date, dayEntries) ->
+
+                TrainingDayHeader(date = date)
+
+                dayEntries.forEach { entry ->
+                    TrainingEntryItem(
+                        weight = entry.weight,
+                        reps = entry.reps
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
+    if (showDatePicker) {
+
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        selectedDate = Instant
+                            .ofEpochMilli(millis)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Abbrechen")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }
 
 @Composable
+fun TrainingDayHeader(date: LocalDate) {
+    val today = LocalDate.now()
+
+    val title = when (date) {
+        today -> "Heute"
+        else -> date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+    }
+
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
+}
+
+@Composable
 fun TrainingEntryItem(
-    weight: String,
-    reps: String
+    weight: Float,
+    reps: Int
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(14.dp)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("$weight kg", style = MaterialTheme.typography.titleMedium)
-            Text("$reps Wdh", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = "$weight kg",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "$reps Wdh",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
-

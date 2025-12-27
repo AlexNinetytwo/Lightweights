@@ -4,7 +4,7 @@ import de.alex.lightweights.domain.model.TrainingEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class TrainingEntryDataSource {
+object TrainingEntryDataSource {
 
     private val _entries = MutableStateFlow<List<TrainingEntry>>(emptyList())
     val entries: StateFlow<List<TrainingEntry>> = _entries

@@ -8,24 +8,24 @@ import de.alex.lightweights.domain.model.TrainingEntry
 import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
 
-class ExerciseDetailViewModel(
-    private val dataSource: TrainingEntryDataSource = TrainingEntryDataSource()
-): ViewModel() {
+class ExerciseDetailViewModel : ViewModel() {
 
-    val entries: StateFlow<List<TrainingEntry>> = dataSource.entries
+    val entries: StateFlow<List<TrainingEntry>> =
+        TrainingEntryDataSource.entries
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun addTrainingEntry(
         exerciseId: String,
         weight: Float,
-        reps: Int
+        reps: Int,
+        date: LocalDate
     ) {
         val entry = TrainingEntry(
             exerciseId = exerciseId,
-            date = LocalDate.now(),
+            date = date,
             weight = weight,
             reps = reps
         )
-        dataSource.addEntry(entry)
+        TrainingEntryDataSource.addEntry(entry)
     }
 }
