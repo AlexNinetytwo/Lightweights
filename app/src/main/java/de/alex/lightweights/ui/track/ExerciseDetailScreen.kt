@@ -1,6 +1,5 @@
 package de.alex.lightweights.ui.track
 
-import ExerciseItem
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
@@ -9,9 +8,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -22,6 +23,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+
+enum class TimeFilter { ALL, YEAR, QUARTER, MONTH }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,10 +39,6 @@ fun ExerciseDetailScreen(
     var enteredReps by remember { mutableStateOf("") }
     val isValid = enteredWeight.isNotBlank() && enteredReps.isNotBlank()
     val entries by viewModel.entries.collectAsState()
-    val chartData = entries
-        .filter { it.exerciseId == exerciseId }
-        .sortedBy { it.date }
-        .map { it.date to calculateStrength(it) }
 
     val exerciseEntries = entries
         .filter { it.exerciseId == exerciseId }
@@ -48,6 +47,34 @@ fun ExerciseDetailScreen(
     val groupedEntries = exerciseEntries.groupBy { it.date }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var selectedFilter by remember { mutableStateOf(TimeFilter.ALL) }
+
+    val filteredChartData by remember(entries, selectedFilter) {
+        derivedStateOf {
+            val allChartData = entries
+                .filter { it.exerciseId == exerciseId }
+                .sortedBy { it.date }
+                .map { it.date to calculateStrength(it) }
+
+            if (allChartData.isEmpty()) {
+                return@derivedStateOf emptyList()
+            }
+
+            val today = LocalDate.now()
+            val limitDate = when (selectedFilter) {
+                TimeFilter.YEAR -> today.minusYears(1)
+                TimeFilter.QUARTER -> today.minusMonths(3)
+                TimeFilter.MONTH -> today.minusMonths(1)
+                TimeFilter.ALL -> null // Kein Zeitlimit
+            }
+
+            if (limitDate != null) {
+                allChartData.filter { (date, _) -> date.isAfter(limitDate) }
+            } else {
+                allChartData
+            }
+        }
+    }
 
 
     Scaffold(
@@ -57,7 +84,7 @@ fun ExerciseDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -141,8 +168,14 @@ fun ExerciseDetailScreen(
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 item {
+                    // 3. Füge die Filter-Buttons hinzu
+                    FilterButtons(
+                        selected = selectedFilter,
+                        onFilterSelected = { newFilter -> selectedFilter = newFilter }
+                    )
+
                     StrengthChart(
-                        chartData = chartData,
+                        chartData = filteredChartData,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(220.dp)
@@ -203,6 +236,7 @@ fun ExerciseDetailScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TrainingDayHeader(date: LocalDate) {
     val today = LocalDate.now()
@@ -244,5 +278,22 @@ fun TrainingEntryItem(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
+    }
+}
+
+@Composable
+fun FilterButtons(
+    selected: TimeFilter,
+    onFilterSelected: (TimeFilter) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Button(onClick = { onFilterSelected(TimeFilter.ALL) }, enabled = selected != TimeFilter.ALL) { Text("Gesamt") }
+        Button(onClick = { onFilterSelected(TimeFilter.YEAR) }, enabled = selected != TimeFilter.YEAR) { Text("Jahr") }
+        Button(onClick = { onFilterSelected(TimeFilter.QUARTER) }, enabled = selected != TimeFilter.QUARTER) { Text("3M") }
+        Button(onClick = { onFilterSelected(TimeFilter.MONTH) }, enabled = selected != TimeFilter.MONTH) { Text("1M") }
     }
 }

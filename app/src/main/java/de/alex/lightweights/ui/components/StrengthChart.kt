@@ -16,7 +16,9 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun StrengthChart(
     chartData: List<Pair<LocalDate, Float>>,
@@ -32,32 +34,38 @@ fun StrengthChart(
         modifier = modifier,
         factory = { context ->
             LineChart(context).apply {
-                // Konfiguriere das grundlegende Chart-Layout einmalig
                 configureChartStyle()
-                // Konfiguriere die Achsen mit einem anfänglichen Formatter
-                configureAxes(textColor, gridColor, chartData.map { it.first })
+                // Der Formatter wird jetzt von der Logik im 'update'-Block gesteuert.
+                configureAxes(textColor, gridColor, null) // Startet ohne Datum
             }
         },
         update = { chart ->
-            // Dieser Block wird bei jeder Neuberechnung (Recomposition) ausgeführt.
-
-            // 1. Erstelle die Datenpunkte (Entries) aus den übergebenen chartData
-            val entries = chartData.mapIndexed { index, pair ->
-                Entry(index.toFloat(), pair.second) // X-Wert ist der Index, Y-Wert ist die Stärke
+            if (chartData.isEmpty()) {
+                chart.clear() // Leert das Diagramm, wenn keine Daten da sind
+                chart.invalidate()
+                return@AndroidView
             }
 
-            // 2. Erstelle ein DataSet und style es
+            // NEUE LOGIK:
+            // 1. Finde das Startdatum für unsere Zeitachse (das erste Datum in den Daten)
+            val firstDate = chartData.first().first
+
+            // 2. Erstelle Entries mit zeitlich korrekten X-Werten
+            val entries = chartData.map { (date, value) ->
+                // X-Wert ist die Anzahl der Tage seit dem ersten Training
+                val daysSinceFirst = ChronoUnit.DAYS.between(firstDate, date).toFloat()
+                Entry(daysSinceFirst, value)
+            }
+
+            // 3. Passe den X-Achsen-Formatter an das Startdatum an
+            (chart.xAxis.valueFormatter as? TimeAxisValueFormatter)?.startDate = firstDate
+
+            // ... (der Rest des update-Blocks bleibt wie vorher)
             val dataSet = LineDataSet(entries, "Strength").apply {
                 configureDataSetStyle(lineColor, circleColor)
             }
 
-            // 3. Aktualisiere die Chart-Daten
             chart.data = LineData(dataSet)
-
-            // 4. Stelle sicher, dass der Achsen-Formatter die aktuellsten Daten verwendet
-            (chart.xAxis.valueFormatter as? DateAxisValueFormatter)?.dates = chartData.map { it.first }
-
-            // 5. Zeichne das Diagramm neu
             chart.invalidate()
         }
     )
@@ -82,29 +90,31 @@ private fun LineChart.configureChartStyle() {
 private fun LineChart.configureAxes(
     textColor: Int,
     gridColor: Int,
-    initialDates: List<LocalDate>
+    initialStartDate: LocalDate? // Parameter geändert
 ) {
     xAxis.apply {
         position = XAxis.XAxisPosition.BOTTOM
         this.textColor = textColor
         setDrawGridLines(false)
         setDrawAxisLine(true)
-        granularity = 1f // Verhindert doppelte Labels beim Zoomen
+        granularity = 1f
 
-        // Verwende eine eigene Formatter-Klasse, um die Daten später aktualisieren zu können
-        valueFormatter = DateAxisValueFormatter(initialDates)
+        // NEUER Formatter, der mit Tagen rechnet
+        valueFormatter = TimeAxisValueFormatter(initialStartDate)
     }
+    // ... (axisLeft, axisRight bleiben gleich)
+}
 
-    axisLeft.apply {
-        this.textColor = textColor
-        this.gridColor = gridColor
-        setDrawAxisLine(false)
-        // Setzt den Startpunkt der Y-Achse auf 0
-        axisMinimum = 0f
+private class TimeAxisValueFormatter(var startDate: LocalDate?) : ValueFormatter() {
+    @RequiresApi(Build.VERSION_CODES.O)
+    private val formatter = DateTimeFormatter.ofPattern("dd.MM.")
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun getFormattedValue(value: Float): String {
+        // value ist hier die Anzahl der Tage (z.B. 0.0, 7.0, 21.0)
+        // Wenn kein Startdatum da ist, zeige nichts an.
+        return startDate?.plusDays(value.toLong())?.format(formatter) ?: ""
     }
-
-    // Die rechte Y-Achse wird nicht benötigt
-    axisRight.isEnabled = false
 }
 
 /**
@@ -121,25 +131,4 @@ private fun LineDataSet.configureDataSetStyle(lineColor: Int, circleColor: Int) 
     this.circleRadius = 4f
     this.circleHoleRadius = 2f
     this.setCircleColor(circleColor)
-}
-
-/**
- * Ein benutzerdefinierter Formatter, der einen numerischen Index (0, 1, 2...)
- * in ein formatiertes Datum (z.B. "23.09.") für die X-Achse umwandelt.
- */
-private class DateAxisValueFormatter(var dates: List<LocalDate>) : ValueFormatter() {
-    @RequiresApi(Build.VERSION_CODES.O)
-    private val formatter = DateTimeFormatter.ofPattern("dd.MM.")
-
-    // ÄNDERUNG: Überschreibe die neue Methode
-    @RequiresApi(Build.VERSION_CODES.O)
-    override fun getFormattedValue(value: Float): String {
-        val index = value.toInt()
-        // Gib das formatierte Datum zurück, wenn der Index gültig ist
-        return if (index >= 0 && index < dates.size) {
-            dates[index].format(formatter)
-        } else {
-            "" // Ansonsten leerer String
-        }
-    }
 }
