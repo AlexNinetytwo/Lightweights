@@ -23,7 +23,7 @@ fun TrackScreen(
 ) {
     var searchText by remember { mutableStateOf("") }
 
-    val exercises by viewModel.exercises.collectAsState()
+    val exercises by viewModel.exercises.collectAsState(emptyList())
 
     val filteredExercises by remember(searchText, exercises) {
         derivedStateOf {
