@@ -94,7 +94,9 @@ fun AppNavGraph(navController: NavHostController) {
         composable("addExercise") {
             AddExerciseScreen(
                 onDone = {
-                    // Navigation ZURÜCK vom AddExerciseScreen
+                    navController.popBackStack()
+                },
+                onBack = {
                     navController.popBackStack()
                 }
             )
