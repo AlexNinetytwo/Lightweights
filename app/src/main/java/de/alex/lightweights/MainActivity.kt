@@ -1,28 +1,28 @@
 package de.alex.lightweights
 
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import de.alex.lightweights.ui.components.BottomBar
+import de.alex.lightweights.ui.progress.ProgressScreen
 import de.alex.lightweights.ui.theme.LightweightsTheme
 import de.alex.lightweights.ui.track.AddExerciseScreen
 import de.alex.lightweights.ui.track.ExerciseDetailScreen
 import de.alex.lightweights.ui.track.TrackScreen
 
 class MainActivity : ComponentActivity() {
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -31,75 +31,79 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Die NavController-Instanz wird hier erstellt und verwaltet
-                    val navController = rememberNavController()
-                    // Der Navigationsgraph wird hier aufgerufen
-                    AppNavGraph(navController = navController)
+                    MainScreen()
                 }
             }
         }
     }
 }
 
-// Eine eigene Composable-Funktion für den Navigationsgraphen.
-// Das macht den Code sauber und verhindert Context-Probleme.
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AppNavGraph(navController: NavHostController) {
-    NavHost(
-        navController = navController,
-        startDestination = "track" // Start-Screen ist korrekt
-    ) {
+fun MainScreen() {
 
-        // Route 1: Der TrackScreen
-        composable("track") {
-            TrackScreen(
-                onExerciseClick = { exercise ->
-                    // Navigation ZU "detail" wird hier sicher aufgerufen
-                    navController.navigate("detail/${exercise.id}/${exercise.name}")
-                },
-                onAddExerciseClick = {
-                    // Navigation ZU "addExercise"
-                    navController.navigate("addExercise")
-                }
-            )
+    val navController = rememberNavController()
+
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+
+    val showBottomBar = currentRoute in listOf(
+        NavRoute.Track.route,
+        NavRoute.Progress.route
+    )
+
+    Scaffold(
+        bottomBar = {
+            if (showBottomBar) {
+                BottomBar(navController, currentRoute)
+            }
         }
+    ) { padding ->
+        NavHost(
+            navController = navController,
+            startDestination = NavRoute.Track.route,
+            modifier = Modifier.padding(padding)
+        ) {
 
-        // Route 2: Der DetailScreen
-        composable(
-            route = "detail/{exerciseId}/{exerciseName}",
-            arguments = listOf(
-                navArgument("exerciseId") { type = NavType.StringType },
-                navArgument("exerciseName") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            // Die Argumente werden hier sicher aus dem backStackEntry extrahiert
-            val exerciseId = backStackEntry.arguments?.getString("exerciseId")
-            val exerciseName = backStackEntry.arguments?.getString("exerciseName")
-
-            // Sicherheitsprüfung, falls Argumente fehlen
-            if (exerciseId != null && exerciseName != null) {
-                ExerciseDetailScreen(
-                    exerciseId = exerciseId,
-                    exerciseName = exerciseName,
-                    onBack = {
-                        // Navigation ZURÜCK vom DetailScreen
-                        navController.popBackStack()
+            composable(NavRoute.Track.route) {
+                TrackScreen(
+                    onExerciseClick = { exercise ->
+                        navController.navigate(
+                            NavRoute.ExerciseDetail.createRoute(
+                                exercise.id,
+                                exercise.name
+                            )
+                        )
+                    },
+                    onAddExerciseClick = {
+                        navController.navigate(NavRoute.AddExercise.route)
                     }
                 )
             }
-        }
 
-        // Route 3: Der AddExerciseScreen
-        composable("addExercise") {
-            AddExerciseScreen(
-                onDone = {
-                    navController.popBackStack()
-                },
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
+            composable(NavRoute.Progress.route) {
+                ProgressScreen() // erstmal leer
+            }
+
+            composable(
+                route = NavRoute.ExerciseDetail.route,
+                arguments = listOf(
+                    navArgument("exerciseId") { type = NavType.StringType },
+                    navArgument("exerciseName") { type = NavType.StringType }
+                )
+            ) { entry ->
+                ExerciseDetailScreen(
+                    exerciseId = entry.arguments!!.getString("exerciseId")!!,
+                    exerciseName = entry.arguments!!.getString("exerciseName")!!,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(NavRoute.AddExercise.route) {
+                AddExerciseScreen(
+                    onDone = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

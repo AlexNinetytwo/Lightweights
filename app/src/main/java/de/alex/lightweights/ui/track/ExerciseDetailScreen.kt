@@ -36,7 +36,13 @@ fun ExerciseDetailScreen(
 
     var enteredWeight by remember { mutableStateOf("") }
     var enteredReps by remember { mutableStateOf("") }
-    val isValid = enteredWeight.isNotBlank() && enteredReps.isNotBlank()
+    val isValid by remember(enteredWeight, enteredReps) {
+        derivedStateOf {
+            val weightAsDouble = enteredWeight.replace(',', '.').toDoubleOrNull()
+            val repsAsInt = enteredReps.toIntOrNull()
+            weightAsDouble != null && repsAsInt != null
+        }
+    }
     val entries by viewModel.entries.collectAsState(emptyList())
 
     val exerciseEntries = entries
@@ -120,7 +126,9 @@ fun ExerciseDetailScreen(
 
             OutlinedTextField(
                 value = enteredWeight,
-                onValueChange = { enteredWeight = it },
+                onValueChange = {
+                    enteredWeight = it.filter { char -> char.isDigit() || char == '.' || char == ',' }
+                },
                 label = { Text("Gewicht (kg)") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -131,7 +139,9 @@ fun ExerciseDetailScreen(
 
             OutlinedTextField(
                 value = enteredReps,
-                onValueChange = { enteredReps = it },
+                onValueChange = {
+                    enteredReps = it.filter { char -> char.isDigit() }
+                },
                 label = { Text("Wiederholungen") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -156,12 +166,17 @@ fun ExerciseDetailScreen(
             Button(
                 onClick = {
                     scope.launch {
-                        viewModel.addTrainingEntry(
-                            exerciseId = exerciseId,
-                            weight = enteredWeight.toFloat(),
-                            reps = enteredReps.toInt(),
-                            date = selectedDate
-                        )
+                        val weightValue = enteredWeight.replace(',', '.').toFloatOrNull()
+                        val repsValue = enteredReps.toIntOrNull()
+                        if (weightValue != null && repsValue != null) {
+                            viewModel.addTrainingEntry(
+                                exerciseId = exerciseId,
+                                weight = weightValue,
+                                reps = repsValue,
+                                date = selectedDate
+                            )
+                            enteredReps = ""
+                        }
                     }
                 },
                 enabled = isValid,
