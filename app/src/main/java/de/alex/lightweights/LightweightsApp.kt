@@ -26,7 +26,7 @@ class LightweightsApp: Application() {
                     }
                 }
             }
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     private suspend fun seedExercises() {
