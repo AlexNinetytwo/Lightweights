@@ -1,12 +1,8 @@
 package de.alex.lightweights.ui.track
 
 import android.app.Application
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import de.alex.lightweights.LightweightsApp
-import de.alex.lightweights.data.TrainingEntryDao
 import de.alex.lightweights.data.TrainingEntryDataSource
 import de.alex.lightweights.domain.model.TrainingEntry
 import kotlinx.coroutines.flow.Flow
