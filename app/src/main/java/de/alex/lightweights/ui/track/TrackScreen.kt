@@ -95,4 +95,19 @@ fun TrackScreen(
             }
         }
     }
+
+    if (editingExercise != null) {
+        EditExerciseDialog(
+            exercise = editingExercise!!,
+            onSave = { newName ->
+                viewModel.updateExercise(
+                    exercise = editingExercise!!,
+                    name = newName
+                )
+            },
+            onDismiss = {
+                viewModel.stopEditing()
+            }
+        )
+    }
 }

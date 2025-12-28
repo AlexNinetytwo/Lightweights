@@ -44,6 +44,7 @@ class TrackViewModel(
             exerciseDataSource.updateExercise(exercise.copy(name = name)
             )
         }
+        stopEditing()
     }
 
     fun deleteExercise(exercise: Exercise) {

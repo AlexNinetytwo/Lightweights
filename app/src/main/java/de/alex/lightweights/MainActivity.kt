@@ -3,6 +3,7 @@ package de.alex.lightweights
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -12,10 +13,14 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -25,8 +30,10 @@ import de.alex.lightweights.ui.components.BottomBar
 import de.alex.lightweights.ui.progress.ProgressScreen
 import de.alex.lightweights.ui.theme.LightweightsTheme
 import de.alex.lightweights.ui.track.AddExerciseScreen
+import de.alex.lightweights.ui.track.EditExerciseDialog
 import de.alex.lightweights.ui.track.ExerciseDetailScreen
 import de.alex.lightweights.ui.track.TrackScreen
+import de.alex.lightweights.ui.track.TrackViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -92,7 +99,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(navController: androidx.navigation.NavController) {
+fun MainScreen(navController: NavController) {
 
     val pagerState = rememberPagerState(
         initialPage = 0,
@@ -100,6 +107,7 @@ fun MainScreen(navController: androidx.navigation.NavController) {
     )
 
     val scope = rememberCoroutineScope()
+    val trackViewModel: TrackViewModel = viewModel()
 
     Scaffold(
         modifier = Modifier
@@ -115,30 +123,38 @@ fun MainScreen(navController: androidx.navigation.NavController) {
                 }
             )
         }
-    ) { padding ->
-        HorizontalPager(
-            state = pagerState,
+    ) { padding ->   // ⬅️ DAS fehlte bei dir
+
+        Box(
             modifier = Modifier
-                .padding(padding)
                 .fillMaxSize()
-        ) { page ->
-            when (page) {
-                0 -> TrackScreen(
-                    onExerciseClick = { exercise ->
-                        navController.navigate(
-                            NavRoute.ExerciseDetail.createRoute(
-                                exercise.id,
-                                exercise.name
+                .padding(padding) // ⬅️ extrem wichtig
+        ) {
+
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+
+                when (page) {
+                    0 -> TrackScreen(
+                        onExerciseClick = { exercise ->
+                            navController.navigate(
+                                NavRoute.ExerciseDetail.createRoute(
+                                    id = exercise.id,
+                                    name = exercise.name
+                                )
                             )
-                        )
-                    },
-                    onAddExerciseClick = {
-                        navController.navigate(NavRoute.AddExercise.route)
-                    }
-                )
-                1 -> ProgressScreen()
+                        },
+                        onAddExerciseClick = {
+                            navController.navigate(NavRoute.AddExercise.route)
+                        },
+                        viewModel = trackViewModel
+                    )
+
+                    1 -> ProgressScreen()
+                }
             }
         }
-
     }
 }
