@@ -57,7 +57,7 @@ fun EditExerciseDialog(
                 label = { Text("Name der Übung") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number
+                    keyboardType = KeyboardType.Text
                 ),
                 modifier = Modifier.fillMaxWidth()
             )

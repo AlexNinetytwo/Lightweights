@@ -38,7 +38,7 @@ fun TrackScreen(
         }
     }
 
-    var editingExercise by remember { mutableStateOf<Exercise?>(null) }
+    val editingExercise by viewModel.editingExercise.collectAsState()
 
 
     Scaffold(
@@ -88,25 +88,11 @@ fun TrackScreen(
                     ExerciseItem(
                         name = exercise.name,
                         onClick = { onExerciseClick(exercise) },
-                        onEdit = { editingExercise = exercise },
-                        onDelete = { viewModel.deleteExercise(exercise) },
+                        onEdit = { viewModel.startEditing(exercise) },
+                        onDelete = { viewModel.deleteExercise(exercise) }
                     )
                 }
             }
         }
-    }
-
-    if (editingExercise != null) {
-        EditExerciseDialog(
-            exercise = editingExercise!!,
-            onSave = { name ->
-                viewModel.updateExercise(
-                    editingExercise!!,
-                    name = name
-                )
-                editingExercise = null
-            },
-            onDismiss = { editingExercise = null }
-        )
     }
 }

@@ -60,6 +60,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("androidx.compose.material:material-icons-extended")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation("androidx.compose.foundation:foundation:1.6.0")
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")

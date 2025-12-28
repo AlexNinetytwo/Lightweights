@@ -7,11 +7,16 @@ import de.alex.lightweights.LightweightsApp
 import de.alex.lightweights.data.ExerciseDataSource
 import de.alex.lightweights.domain.model.Exercise
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class TrackViewModel(
     application: Application
 ) : AndroidViewModel(application) {
+
+    private val _editingExercise = MutableStateFlow<Exercise?>(null)
+    val editingExercise: StateFlow<Exercise?> = _editingExercise
 
     private val exerciseDataSource =
         ExerciseDataSource(
@@ -22,6 +27,14 @@ class TrackViewModel(
 
     val exercises: Flow<List<Exercise>> =
         exerciseDataSource.exercises
+
+    fun startEditing(exercise: Exercise) {
+        _editingExercise.value = exercise
+    }
+
+    fun stopEditing() {
+        _editingExercise.value = null
+    }
 
     fun updateExercise(
         exercise: Exercise,
