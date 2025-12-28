@@ -1,7 +1,5 @@
 package de.alex.lightweights.data
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
@@ -11,7 +9,7 @@ import java.time.LocalDate
 
 // Konverter, der LocalDate in einen String umwandelt und zurück
 class Converters {
-    @RequiresApi(Build.VERSION_CODES.O)
+
     @TypeConverter
     fun fromTimestamp(value: String?): LocalDate? {
         return value?.let { LocalDate.parse(it) }
