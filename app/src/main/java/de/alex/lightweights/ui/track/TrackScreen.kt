@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,6 +37,8 @@ fun TrackScreen(
             }
         }
     }
+
+    var editingExercise by remember { mutableStateOf<Exercise?>(null) }
 
 
     Scaffold(
@@ -84,10 +87,26 @@ fun TrackScreen(
                 items(filteredExercises) { exercise ->
                     ExerciseItem(
                         name = exercise.name,
-                        onClick = { onExerciseClick(exercise) }
+                        onClick = { onExerciseClick(exercise) },
+                        onEdit = { editingExercise = exercise },
+                        onDelete = { viewModel.deleteExercise(exercise) },
                     )
                 }
             }
         }
+    }
+
+    if (editingExercise != null) {
+        EditExerciseDialog(
+            exercise = editingExercise!!,
+            onSave = { name ->
+                viewModel.updateExercise(
+                    editingExercise!!,
+                    name = name
+                )
+                editingExercise = null
+            },
+            onDismiss = { editingExercise = null }
+        )
     }
 }

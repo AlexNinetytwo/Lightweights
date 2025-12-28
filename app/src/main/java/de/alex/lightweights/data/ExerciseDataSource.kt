@@ -16,6 +16,11 @@ class ExerciseDataSource(
         )
     }
 
+    suspend fun updateExercise(exercise: Exercise) {
+        dao.update(exercise)
+    }
+
+
     suspend fun deleteExercise(exercise: Exercise) {
         dao.delete(exercise)
     }

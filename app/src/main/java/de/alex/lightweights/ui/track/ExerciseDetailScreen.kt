@@ -1,7 +1,6 @@
 package de.alex.lightweights.ui.track
 
-import android.os.Build
-import androidx.annotation.RequiresApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,13 +10,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import calculateStrength
+import de.alex.lightweights.domain.model.TrainingEntry
 import de.alex.lightweights.ui.components.StrengthChart
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -89,6 +87,8 @@ fun ExerciseDetailScreen(
             }
         }
     }
+
+    var editingEntry by remember { mutableStateOf<TrainingEntry?>(null) }
 
 
     Scaffold(
@@ -208,8 +208,11 @@ fun ExerciseDetailScreen(
 
                     items(dayEntries) { entry ->
                         TrainingEntryItem(
-                            weight = entry.weight,
-                            reps = entry.reps
+                            entry = entry,
+                            onEdit = { editingEntry = entry },
+                            onDelete = {
+                                viewModel.deleteTrainingEntry(entry)
+                            }
                         )
                     }
                 }
@@ -250,9 +253,24 @@ fun ExerciseDetailScreen(
             DatePicker(state = datePickerState)
         }
     }
+
+    if (editingEntry != null) {
+        EditTrainingEntryDialog(
+            entry = editingEntry!!,
+            onSave = { weight, reps ->
+                viewModel.updateTrainingEntry(
+                    editingEntry!!,
+                    weight,
+                    reps
+                )
+                editingEntry = null
+            },
+            onDismiss = { editingEntry = null }
+        )
+    }
+
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TrainingDayHeader(date: LocalDate) {
     val today = LocalDate.now()
@@ -272,27 +290,50 @@ fun TrainingDayHeader(date: LocalDate) {
 
 @Composable
 fun TrainingEntryItem(
-    weight: Float,
-    reps: Int
+    entry: TrainingEntry,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .combinedClickable(
+                onClick = {},
+                onLongClick = { expanded = true }
+            ),
         shape = RoundedCornerShape(14.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "$weight kg",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "$reps Wdh",
-                style = MaterialTheme.typography.bodyMedium
-            )
+        Box {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("${entry.weight} kg")
+                Text("${entry.reps} Wdh")
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Bearbeiten") },
+                    onClick = {
+                        expanded = false
+                        onEdit()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Löschen") },
+                    onClick = {
+                        expanded = false
+                        onDelete()
+                    }
+                )
+            }
         }
     }
 }

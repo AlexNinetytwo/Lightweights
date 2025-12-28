@@ -13,10 +13,9 @@ class TrainingEntryDataSource(private val dao: TrainingEntryDao) {
         dao.addEntry(entry)
     }
 
-    // Diese Funktion ist nicht mehr ideal, da sie auf dem letzten Wert des Flows arbeitet.
-    // Es ist besser, Abfragen direkt im DAO zu definieren, wenn sie oft gebraucht werden.
-    // Für den Moment lassen wir sie als Beispiel, aber sie ist nicht mehr reaktiv.
-    fun getEntriesForExercise(exerciseId: String, currentEntries: List<TrainingEntry>): List<TrainingEntry> {
-        return currentEntries.filter { it.exerciseId == exerciseId }
-    }
+    suspend fun updateEntry(entry: TrainingEntry) =
+        dao.updateEntry(entry)
+
+    suspend fun deleteEntry(entry: TrainingEntry) =
+        dao.deleteEntry(entry)
 }
