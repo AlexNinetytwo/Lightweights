@@ -1,8 +1,6 @@
 package de.alex.lightweights.ui.components
 
 import android.graphics.Color
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -10,24 +8,26 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
+import de.alex.lightweights.data.DailyExerciseStats
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun StrengthChart(
-    chartData: List<Pair<LocalDate, Float>>,
+    chartData: List<DailyExerciseStats>,
     modifier: Modifier = Modifier
 ) {
     // Farben aus dem Compose MaterialTheme für Light/Dark-Mode-Unterstützung holen
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val gridColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
-    val lineColor = MaterialTheme.colorScheme.primary.toArgb()
+    val weightLineColor = MaterialTheme.colorScheme.primary.toArgb()
+    val strengthLineColor = MaterialTheme.colorScheme.tertiary.toArgb()
     val circleColor = MaterialTheme.colorScheme.secondary.toArgb()
 
     AndroidView(
@@ -48,24 +48,33 @@ fun StrengthChart(
 
             // NEUE LOGIK:
             // 1. Finde das Startdatum für unsere Zeitachse (das erste Datum in den Daten)
-            val firstDate = chartData.first().first
-
-            // 2. Erstelle Entries mit zeitlich korrekten X-Werten
-            val entries = chartData.map { (date, value) ->
-                // X-Wert ist die Anzahl der Tage seit dem ersten Training
-                val daysSinceFirst = ChronoUnit.DAYS.between(firstDate, date).toFloat()
-                Entry(daysSinceFirst, value)
-            }
+            val firstDate = chartData.first().date
 
             // 3. Passe den X-Achsen-Formatter an das Startdatum an
             (chart.xAxis.valueFormatter as? TimeAxisValueFormatter)?.startDate = firstDate
 
-            // ... (der Rest des update-Blocks bleibt wie vorher)
-            val dataSet = LineDataSet(entries, "Strength").apply {
-                configureDataSetStyle(lineColor, circleColor)
+            val movedWeightEntries = chartData.map { entry ->
+                val daysSinceFirst = ChronoUnit.DAYS.between(firstDate, entry.date).toFloat()
+                Entry(daysSinceFirst, entry.movedWeight)
             }
 
-            chart.data = LineData(dataSet)
+            val strengthEntries = chartData.map { entry ->
+                val daysSinceFirst = ChronoUnit.DAYS.between(firstDate, entry.date).toFloat()
+                Entry(daysSinceFirst, entry.bestStrength.toFloat())
+            }
+
+            val weightDataSet = LineDataSet(movedWeightEntries, "Bewegtes Gewicht").apply {
+                axisDependency = YAxis.AxisDependency.LEFT
+                configureDataSetStyle(weightLineColor, circleColor)
+            }
+
+            val strengthDataSet = LineDataSet(strengthEntries, "Stärke").apply {
+                axisDependency = YAxis.AxisDependency.RIGHT
+                configureDataSetStyle(strengthLineColor, circleColor)
+            }
+
+
+            chart.data = LineData(weightDataSet, strengthDataSet)
             chart.invalidate()
         }
     )
@@ -119,10 +128,8 @@ private fun LineChart.configureAxes(
 }
 
 private class TimeAxisValueFormatter(var startDate: LocalDate?) : ValueFormatter() {
-    @RequiresApi(Build.VERSION_CODES.O)
-    private val formatter = DateTimeFormatter.ofPattern("dd.MM.")
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    private val formatter = DateTimeFormatter.ofPattern("dd.MM.")
     override fun getFormattedValue(value: Float): String {
         // value ist hier die Anzahl der Tage (z.B. 0.0, 7.0, 21.0)
         // Wenn kein Startdatum da ist, zeige nichts an.

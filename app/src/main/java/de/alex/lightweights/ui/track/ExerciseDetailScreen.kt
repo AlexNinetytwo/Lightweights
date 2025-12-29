@@ -14,7 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import calculateStrength
+import de.alex.lightweights.data.DailyExerciseStats
+import de.alex.lightweights.domain.calculateMovedWeight
+import de.alex.lightweights.domain.calculateStrength
 import de.alex.lightweights.domain.model.TrainingEntry
 import de.alex.lightweights.ui.components.StrengthChart
 import kotlinx.coroutines.launch
@@ -56,22 +58,31 @@ fun ExerciseDetailScreen(
 
     val scope = rememberCoroutineScope()
 
+    var maxReps by remember { mutableDoubleStateOf(12.0) }
+    var cutoff by remember { mutableDoubleStateOf(0.18) }
+
     val filteredChartData by remember(entries, selectedFilter, exerciseId) {
         derivedStateOf {
-            // 1. Filtere nach Übung und sortiere (wichtig für die Chart-Reihenfolge)
-            val dailyAggregatedData = entries
-                .filter { it.exerciseId == exerciseId }
-                .sortedBy { it.date }
-                // 2. Gruppiere alle Einträge nach ihrem Datum
-                .groupBy { it.date }
-                // 3. Transformiere die Werte jeder Gruppe:
-                //    Summiere die Stärke aller Einträge für diesen Tag auf.
-                .mapValues { (_, dayEntries) ->
-                    dayEntries.sumOf { calculateStrength(it).toDouble() }.toFloat()
-                }
-                // 4. Konvertiere die Map zurück in eine Liste von Paaren.
-                //    Das Ergebnis ist z.B.: [(2023-09-22, 150.5), (2023-09-24, 160.0)]
-                .toList()
+            val dailyAggregatedData: List<DailyExerciseStats> =
+                entries
+                    .filter { it.exerciseId == exerciseId }
+                    .groupBy { it.date }
+                    .map { (date, dayEntries) ->
+
+                        val movedWeight = dayEntries
+                            .sumOf { calculateMovedWeight(it).toDouble() }
+                            .toFloat()
+
+                        val bestStrength = dayEntries
+                            .maxOf { calculateStrength(it, maxReps, cutoff) }
+
+                        DailyExerciseStats(
+                            date = date,
+                            movedWeight = movedWeight,
+                            bestStrength = bestStrength
+                        )
+                    }
+                    .sortedBy { it.date }
 
             // Der Filter-Code ab hier bleibt gleich und funktioniert weiterhin perfekt.
             if (dailyAggregatedData.isEmpty()) {
@@ -199,6 +210,20 @@ fun ExerciseDetailScreen(
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 item {
+                    Text("Max. relevante Wiederholungen: $maxReps")
+                    Slider(
+                        value = maxReps.toFloat(),
+                        onValueChange = { maxReps = it.toDouble() },
+                        valueRange = 5f..20f,
+                        steps = 14
+                    )
+
+                    Text("Sättigungs-Faktor: ${"%.2f".format(cutoff)}")
+                    Slider(
+                        value = cutoff.toFloat(),
+                        onValueChange = { cutoff = it.toDouble() },
+                        valueRange = 0.05f..0.5f
+                    )
                     // 3. Füge die Filter-Buttons hinzu
                     FilterButtons(
                         selected = selectedFilter,
