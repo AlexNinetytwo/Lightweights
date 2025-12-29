@@ -36,7 +36,7 @@ fun StrengthChart(
             LineChart(context).apply {
                 configureChartStyle()
                 // Der Formatter wird jetzt von der Logik im 'update'-Block gesteuert.
-                configureAxes(textColor, gridColor, null) // Startet ohne Datum
+                configureAxes(textColor, weightLineColor, strengthLineColor, gridColor, null) // Startet ohne Datum
             }
         },
         update = { chart ->
@@ -97,13 +97,15 @@ private fun LineChart.configureChartStyle() {
  * Konfiguriert die X- und Y-Achsen des Charts.
  */
 private fun LineChart.configureAxes(
-    textColor: Int,
+    xAxisTextColor: Int,
+    weightTextColor: Int,
+    strengthTextColor: Int,
     gridColor: Int,
     initialStartDate: LocalDate? // Parameter geändert
 ) {
     xAxis.apply {
         position = XAxis.XAxisPosition.BOTTOM
-        this.textColor = textColor
+        this.textColor = xAxisTextColor
         setDrawGridLines(false)
         setDrawAxisLine(true)
         granularity = 1f
@@ -113,7 +115,7 @@ private fun LineChart.configureAxes(
     }
 
     axisLeft.apply {
-        this.textColor = textColor
+        this.textColor = weightTextColor
         this.gridColor = gridColor
         setDrawAxisLine(false)
         axisMinimum = 0f
@@ -123,8 +125,13 @@ private fun LineChart.configureAxes(
         setDrawLabels(true)
     }
 
-    // Die rechte Y-Achse wird nicht benötigt
-    axisRight.isEnabled = false
+    axisRight.apply {
+        this.isEnabled = true
+        this.textColor = strengthTextColor
+        setDrawGridLines(false)
+        setDrawAxisLine(false)
+        axisMinimum = 0f
+    }
 }
 
 private class TimeAxisValueFormatter(var startDate: LocalDate?) : ValueFormatter() {
@@ -147,7 +154,7 @@ private fun LineDataSet.configureDataSetStyle(lineColor: Int, circleColor: Int) 
     setDrawValues(false)
 
     // Style für die Kreise an den Datenpunkten
-    setDrawCircles(true)
+    setDrawCircles(false)
     this.circleRadius = 4f
     this.circleHoleRadius = 2f
     this.setCircleColor(circleColor)

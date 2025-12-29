@@ -210,21 +210,21 @@ fun ExerciseDetailScreen(
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 item {
-                    Text("Max. relevante Wiederholungen: $maxReps")
-                    Slider(
-                        value = maxReps.toFloat(),
-                        onValueChange = { maxReps = it.toDouble() },
-                        valueRange = 5f..20f,
-                        steps = 14
-                    )
+//                    Text("Max. relevante Wiederholungen: $maxReps")
+//                    Slider(
+//                        value = maxReps.toFloat(),
+//                        onValueChange = { maxReps = it.toDouble() },
+//                        valueRange = 5f..20f,
+//                        steps = 14
+//                    )
+//
+//                    Text("Sättigungs-Faktor: ${"%.2f".format(cutoff)}")
+//                    Slider(
+//                        value = cutoff.toFloat(),
+//                        onValueChange = { cutoff = it.toDouble() },
+//                        valueRange = 0.05f..0.5f
+//                    )
 
-                    Text("Sättigungs-Faktor: ${"%.2f".format(cutoff)}")
-                    Slider(
-                        value = cutoff.toFloat(),
-                        onValueChange = { cutoff = it.toDouble() },
-                        valueRange = 0.05f..0.5f
-                    )
-                    // 3. Füge die Filter-Buttons hinzu
                     FilterButtons(
                         selected = selectedFilter,
                         onFilterSelected = { newFilter -> selectedFilter = newFilter }

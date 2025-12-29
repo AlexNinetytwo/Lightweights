@@ -1,5 +1,6 @@
 package de.alex.lightweights.domain
 
+import android.util.Log
 import de.alex.lightweights.domain.model.TrainingEntry
 import kotlin.math.exp
 
@@ -13,5 +14,8 @@ fun strengthFromReps(x: Int, maxReps: Double, cutoff: Double): Double {
 }
 
 fun calculateStrength(entry: TrainingEntry, maxReps: Double, cutoff: Double): Double {
-    return entry.weight * strengthFromReps(entry.reps, maxReps, cutoff)
+    val factor = strengthFromReps(entry.reps, maxReps, cutoff)
+//    Log.d("calc strength", "weight: ${entry.weight}, reps: ${entry.reps}, factor: $factor")
+//    Log.d("calc strength", "entry: ${entry.date}, strength: ${entry.weight * factor}, moved weight: ${calculateMovedWeight(entry)}")
+    return entry.weight * factor * 0.1
 }
