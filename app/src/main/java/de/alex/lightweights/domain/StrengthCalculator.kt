@@ -17,13 +17,11 @@ fun strengthFromReps(x: Int, maxReps: Double, cutoff: Double): Double {
     return maxReps * (1.0 - exp(-cutoff * x))
 }
 
-fun calculateStrength(entry: TrainingEntry, maxReps: Double, cutoff: Double): Double {
-    val factor = strengthFromReps(entry.reps, maxReps, cutoff)
-//    Log.d("calc strength", "weight: ${entry.weight}, reps: ${entry.reps}, factor: $factor")
-//    Log.d("calc strength", "entry: ${entry.date}, strength: ${entry.weight * factor}, moved weight: ${calculateMovedWeight(entry)}")
-    return entry.weight * factor * 0.1
-}
-
-fun calculateStrength(entry: SummerizedTrainingEntry, maxReps: Double, cutoff: Double): Double {
-    return entry.weight * strengthFromReps(entry.reps, maxReps, cutoff) * 0.1
+fun calculateStrength(
+    weight: Float,
+    reps: Int,
+    maxReps: Double,
+    cutoff: Double
+): Double {
+    return weight * strengthFromReps(reps, maxReps, cutoff)
 }

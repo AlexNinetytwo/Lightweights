@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.alex.lightweights.domain.TimeFilter
 import de.alex.lightweights.domain.rememberFilteredChartDataForSummerizedExerciseStats
-import de.alex.lightweights.domain.summerizeTrainingEntries
 import de.alex.lightweights.ui.components.StrengthChart
 import de.alex.lightweights.ui.track.ExerciseDetailViewModel
 import de.alex.lightweights.ui.track.FilterButtons
@@ -29,11 +28,10 @@ import de.alex.lightweights.ui.track.FilterButtons
 fun ProgressScreen() {
     val viewModel: ExerciseDetailViewModel = viewModel()
     val entries by viewModel.entries.collectAsState(emptyList())
-    val summerizedEntries = summerizeTrainingEntries(entries)
     var selectedFilter by remember { mutableStateOf(TimeFilter.ALL) }
     var maxReps by remember { mutableDoubleStateOf(12.0) }
     var cutoff by remember { mutableDoubleStateOf(0.18) }
-    val filteredChartData by rememberFilteredChartDataForSummerizedExerciseStats(summerizedEntries, selectedFilter, maxReps, cutoff)
+    val filteredChartData by rememberFilteredChartDataForSummerizedExerciseStats(entries, selectedFilter, maxReps, cutoff)
 
     Scaffold(
         topBar = {

@@ -34,7 +34,7 @@ fun rememberFilteredChartData(
                             .toFloat()
 
                         val bestStrength = dayEntries
-                            .maxOf { calculateStrength(it, maxReps, cutoff) }
+                            .maxOf { calculateStrength(it.weight, it.reps, maxReps, cutoff) }
 
                         DailyExerciseStats(
                             date = date,
@@ -67,37 +67,63 @@ fun rememberFilteredChartData(
 
 @Composable
 fun rememberFilteredChartDataForSummerizedExerciseStats(
-    entries: List<SummerizedTrainingEntry>,
+    entries: List<TrainingEntry>,
     selectedFilter: TimeFilter,
     maxReps: Double,
     cutoff: Double
 ): State<List<SummarizedDailyExerciseStats>> {
-
+    // 1. Die gesamte Logik in remember und derivedStateOf einschließen
     return remember(entries, selectedFilter, maxReps, cutoff) {
         derivedStateOf {
-            val dailyAggregatedData: List<DailyExerciseStats> =
-                entries
-                    .groupBy { it.date }
-                    .map { (date, dayEntries) ->
-                        val movedWeight = dayEntries
-                            .sumOf { calculateMovedWeight(it).toDouble() }
-                            .toFloat()
+            val allTrainingDates = entries
+                .map { it.date }
+                .distinct()
+                .sorted()
 
-                        val bestStrength = dayEntries
-                            .maxOf { calculateStrength(it, maxReps, cutoff) }
-
-                        DailyExerciseStats(
-                            date = date,
-                            movedWeight = movedWeight,
-                            bestStrength = bestStrength
-                        )
-                    }
-                    .sortedBy { it.date }
-
-            if (dailyAggregatedData.isEmpty()) {
-                return@derivedStateOf emptyList()
+            if (allTrainingDates.isEmpty()) {
+                // Früher Ausstieg, wenn keine Einträge vorhanden sind
+                return@derivedStateOf emptyList<SummarizedDailyExerciseStats>()
             }
 
+            val lastKnownExerciseState = mutableMapOf<String, ExerciseState>()
+            val dailyStats = mutableListOf<SummarizedDailyExerciseStats>()
+
+            for (date in allTrainingDates) {
+                val entriesOfDay = entries.filter { it.date == date }
+
+                // 🔄 Update states mit heutigen Einträgen
+                for (entry in entriesOfDay) {
+                    lastKnownExerciseState[entry.exerciseId] = ExerciseState(
+                        weight = entry.weight,
+                        reps = entry.reps
+                    )
+                }
+
+                // 📦 Volumen: nur heutige Einträge
+                val movedWeight = entriesOfDay
+                    .sumOf { calculateMovedWeight(it).toDouble() }
+                    .toFloat()
+
+                // 💪 Stärke: alle bekannten Übungen
+                val strength = lastKnownExerciseState.values
+                    .sumOf { state ->
+                        calculateStrength(
+                            weight = state.weight,
+                            reps = state.reps,
+                            maxReps = maxReps,
+                            cutoff = cutoff
+                        )
+                    }
+
+                // 2. Den korrekten Typ 'SummarizedDailyExerciseStats' verwenden
+                dailyStats += SummarizedDailyExerciseStats(
+                    date = date,
+                    movedWeight = movedWeight,
+                    bestStrength = strength
+                )
+            }
+
+            // --- Zeitfilterung ---
             val today = LocalDate.now()
             val limitDate = when (selectedFilter) {
                 TimeFilter.YEAR -> today.minusYears(1)
@@ -106,10 +132,11 @@ fun rememberFilteredChartDataForSummerizedExerciseStats(
                 TimeFilter.ALL -> null // Kein Zeitlimit
             }
 
+            // 3. Das Ergebnis des Blocks explizit zurückgeben
             if (limitDate != null) {
-                dailyAggregatedData.filter { (date, _) -> date.isAfter(limitDate) }
+                dailyStats.filter { it.date.isAfter(limitDate) }
             } else {
-                dailyAggregatedData
+                dailyStats
             }
         }
     }
@@ -129,4 +156,10 @@ fun summerizeTrainingEntries(
             )
         }
 }
+
+data class ExerciseState(
+    val weight: Float,
+    val reps: Int
+)
+
 
