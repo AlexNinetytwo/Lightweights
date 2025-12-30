@@ -14,18 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import de.alex.lightweights.data.DailyExerciseStats
-import de.alex.lightweights.domain.calculateMovedWeight
-import de.alex.lightweights.domain.calculateStrength
 import de.alex.lightweights.domain.model.TrainingEntry
+import de.alex.lightweights.domain.rememberFilteredChartData
+import de.alex.lightweights.domain.TimeFilter
 import de.alex.lightweights.ui.components.StrengthChart
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-
-enum class TimeFilter { ALL, YEAR, QUARTER, MONTH }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,49 +58,7 @@ fun ExerciseDetailScreen(
     var maxReps by remember { mutableDoubleStateOf(12.0) }
     var cutoff by remember { mutableDoubleStateOf(0.18) }
 
-    val filteredChartData by remember(entries, selectedFilter, exerciseId) {
-        derivedStateOf {
-            val dailyAggregatedData: List<DailyExerciseStats> =
-                entries
-                    .filter { it.exerciseId == exerciseId }
-                    .groupBy { it.date }
-                    .map { (date, dayEntries) ->
-
-                        val movedWeight = dayEntries
-                            .sumOf { calculateMovedWeight(it).toDouble() }
-                            .toFloat()
-
-                        val bestStrength = dayEntries
-                            .maxOf { calculateStrength(it, maxReps, cutoff) }
-
-                        DailyExerciseStats(
-                            date = date,
-                            movedWeight = movedWeight,
-                            bestStrength = bestStrength
-                        )
-                    }
-                    .sortedBy { it.date }
-
-            // Der Filter-Code ab hier bleibt gleich und funktioniert weiterhin perfekt.
-            if (dailyAggregatedData.isEmpty()) {
-                return@derivedStateOf emptyList()
-            }
-
-            val today = LocalDate.now()
-            val limitDate = when (selectedFilter) {
-                TimeFilter.YEAR -> today.minusYears(1)
-                TimeFilter.QUARTER -> today.minusMonths(3)
-                TimeFilter.MONTH -> today.minusMonths(1)
-                TimeFilter.ALL -> null // Kein Zeitlimit
-            }
-
-            if (limitDate != null) {
-                dailyAggregatedData.filter { (date, _) -> date.isAfter(limitDate) }
-            } else {
-                dailyAggregatedData
-            }
-        }
-    }
+    val filteredChartData by rememberFilteredChartData(entries, exerciseId, selectedFilter, maxReps, cutoff)
 
     var editingEntry by remember { mutableStateOf<TrainingEntry?>(null) }
 

@@ -7,3 +7,5 @@ data class DailyExerciseStats(
     val movedWeight: Float,
     val bestStrength: Double
 )
+
+typealias SummarizedDailyExerciseStats = DailyExerciseStats
