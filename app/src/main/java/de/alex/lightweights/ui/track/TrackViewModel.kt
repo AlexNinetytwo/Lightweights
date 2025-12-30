@@ -16,7 +16,9 @@ class TrackViewModel(
 ) : AndroidViewModel(application) {
 
     private val _editingExercise = MutableStateFlow<Exercise?>(null)
+    private val _deletingExercise = MutableStateFlow<Exercise?>(null)
     val editingExercise: StateFlow<Exercise?> = _editingExercise
+    val deletingExercise: StateFlow<Exercise?> = _deletingExercise
 
     private val exerciseDataSource =
         ExerciseDataSource(
@@ -27,6 +29,14 @@ class TrackViewModel(
 
     val exercises: Flow<List<Exercise>> =
         exerciseDataSource.exercises
+
+    fun startDeletingExercise(exercise: Exercise) {
+        _deletingExercise.value = exercise
+    }
+
+    fun stopDeletingExercise() {
+        _deletingExercise.value = null
+    }
 
     fun startEditing(exercise: Exercise) {
         _editingExercise.value = exercise
@@ -51,5 +61,6 @@ class TrackViewModel(
         viewModelScope.launch {
             exerciseDataSource.deleteExercise(exercise)
         }
+        stopDeletingExercise()
     }
 }

@@ -39,6 +39,8 @@ fun TrackScreen(
     }
 
     val editingExercise by viewModel.editingExercise.collectAsState()
+    val deletingExercise by viewModel.deletingExercise.collectAsState()
+
 
 
     Scaffold(
@@ -89,7 +91,7 @@ fun TrackScreen(
                         name = exercise.name,
                         onClick = { onExerciseClick(exercise) },
                         onEdit = { viewModel.startEditing(exercise) },
-                        onDelete = { viewModel.deleteExercise(exercise) }
+                        onDelete = { viewModel.startDeletingExercise(exercise) }
                     )
                 }
             }
@@ -107,6 +109,18 @@ fun TrackScreen(
             },
             onDismiss = {
                 viewModel.stopEditing()
+            }
+        )
+    }
+
+    if (deletingExercise != null) {
+        DeleteExerciseDialog(
+            onAccept = {
+                viewModel.deleteExercise(deletingExercise!!)
+            },
+            onDismiss = {
+                viewModel.stopEditing()
+                viewModel.stopDeletingExercise()
             }
         )
     }
