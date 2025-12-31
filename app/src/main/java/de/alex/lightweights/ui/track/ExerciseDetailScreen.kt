@@ -51,7 +51,7 @@ fun ExerciseDetailScreen(
     val groupedEntries = exerciseEntries.groupBy { it.date }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedFilter by remember { mutableStateOf(TimeFilter.ALL) }
+    var selectedFilter by remember { mutableStateOf(TimeFilter.MONTH) }
 
     val scope = rememberCoroutineScope()
 
@@ -151,13 +151,6 @@ fun ExerciseDetailScreen(
                 Text("Speichern")
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(
-                text = "Stärke-Verlauf",
-                style = MaterialTheme.typography.titleMedium
-            )
-
             Spacer(modifier = Modifier.height(12.dp))
 
             LazyColumn(
@@ -184,6 +177,8 @@ fun ExerciseDetailScreen(
                         selected = selectedFilter,
                         onFilterSelected = { newFilter -> selectedFilter = newFilter }
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     StrengthChart(
                         chartData = filteredChartData,

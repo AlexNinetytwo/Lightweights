@@ -28,7 +28,7 @@ import de.alex.lightweights.ui.track.FilterButtons
 fun ProgressScreen() {
     val viewModel: ExerciseDetailViewModel = viewModel()
     val entries by viewModel.entries.collectAsState(emptyList())
-    var selectedFilter by remember { mutableStateOf(TimeFilter.ALL) }
+    var selectedFilter by remember { mutableStateOf(TimeFilter.MONTH) }
     var maxReps by remember { mutableDoubleStateOf(12.0) }
     var cutoff by remember { mutableDoubleStateOf(0.18) }
     val filteredChartData by rememberFilteredChartDataForSummerizedExerciseStats(entries, selectedFilter, maxReps, cutoff)
@@ -40,25 +40,26 @@ fun ProgressScreen() {
             )
         }
     ) { paddingValue ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValue)
         ) {
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 item {
-                    Text(
-                        text = "Gesamtvolume",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
                     FilterButtons(
                         selected = selectedFilter,
                         onFilterSelected = { newFilter -> selectedFilter = newFilter }
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     StrengthChart(
                         chartData = filteredChartData,

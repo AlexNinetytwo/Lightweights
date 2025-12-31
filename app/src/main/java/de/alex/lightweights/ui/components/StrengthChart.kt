@@ -1,14 +1,26 @@
 package de.alex.lightweights.ui.components
 
 import android.graphics.Color
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.charts.CombinedChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.CombinedData
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -23,67 +35,97 @@ fun StrengthChart(
     chartData: List<DailyExerciseStats>,
     modifier: Modifier = Modifier
 ) {
-    // Farben aus dem Compose MaterialTheme für Light/Dark-Mode-Unterstützung holen
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val gridColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
     val weightLineColor = MaterialTheme.colorScheme.primary.toArgb()
     val strengthLineColor = MaterialTheme.colorScheme.tertiary.toArgb()
     val circleColor = MaterialTheme.colorScheme.secondary.toArgb()
 
-    AndroidView(
-        modifier = modifier,
-        factory = { context ->
-            LineChart(context).apply {
-                configureChartStyle()
-                // Der Formatter wird jetzt von der Logik im 'update'-Block gesteuert.
-                configureAxes(textColor, weightLineColor, strengthLineColor, gridColor, null) // Startet ohne Datum
-            }
-        },
-        update = { chart ->
-            if (chartData.isEmpty()) {
-                chart.clear() // Leert das Diagramm, wenn keine Daten da sind
-                chart.invalidate()
-                return@AndroidView
-            }
+    Column(modifier = modifier) {
 
-            // NEUE LOGIK:
-            // 1. Finde das Startdatum für unsere Zeitachse (das erste Datum in den Daten)
-            val firstDate = chartData.first().date
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Volumen (kg)",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
 
-            // 3. Passe den X-Achsen-Formatter an das Startdatum an
-            (chart.xAxis.valueFormatter as? TimeAxisValueFormatter)?.startDate = firstDate
-
-            val movedWeightEntries = chartData.map { entry ->
-                val daysSinceFirst = ChronoUnit.DAYS.between(firstDate, entry.date).toFloat()
-                Entry(daysSinceFirst, entry.movedWeight)
-            }
-
-            val strengthEntries = chartData.map { entry ->
-                val daysSinceFirst = ChronoUnit.DAYS.between(firstDate, entry.date).toFloat()
-                Entry(daysSinceFirst, entry.bestStrength.toFloat())
-            }
-
-            val weightDataSet = LineDataSet(movedWeightEntries, "Bewegtes Gewicht").apply {
-                axisDependency = YAxis.AxisDependency.LEFT
-                configureDataSetStyle(weightLineColor, circleColor)
-            }
-
-            val strengthDataSet = LineDataSet(strengthEntries, "Stärke").apply {
-                axisDependency = YAxis.AxisDependency.RIGHT
-                configureDataSetStyle(strengthLineColor, circleColor)
-            }
-
-
-            chart.data = LineData(weightDataSet, strengthDataSet)
-            chart.invalidate()
+            Text(
+                text = "Stärke",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.tertiary
+            )
         }
-    )
+
+        AndroidView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(260.dp),
+            factory = { context ->
+                CombinedChart(context).apply {
+                    configureCombinedChartStyle()
+                    configureAxes(textColor, weightLineColor, strengthLineColor, gridColor, null) // Startet ohne Datum
+                }
+            },
+            update = { chart ->
+                if (chartData.isEmpty()) {
+                    chart.clear()
+                    chart.invalidate()
+                    return@AndroidView
+                }
+
+                val firstDate = chartData.first().date
+
+                (chart.xAxis.valueFormatter as? TimeAxisValueFormatter)?.startDate = firstDate
+
+                val volumeEntries = chartData.map { entry ->
+                    val daysSinceFirst = ChronoUnit.DAYS.between(firstDate, entry.date).toFloat()
+                    BarEntry(daysSinceFirst, entry.movedWeight)
+                }
+
+                val strengthEntries = chartData.map { entry ->
+                    val daysSinceFirst = ChronoUnit.DAYS.between(firstDate, entry.date).toFloat()
+                    Entry(daysSinceFirst, entry.bestStrength.toFloat())
+                }
+
+                val volumeDataSet = BarDataSet(volumeEntries, "Bewegtes Gewicht").apply {
+                    configureDataSetStyle(weightLineColor)
+                }
+
+                val strengthDataSet = LineDataSet(strengthEntries, "Stärke").apply {
+                    configureDataSetStyle(strengthLineColor, circleColor)
+                }
+
+                // Calculate the bar width based on the number of entries
+                val entryCount = volumeEntries.size
+                val barWidth = when {
+                    entryCount <= 3  -> 0.25f
+                    entryCount <= 7  -> 0.35f
+                    entryCount <= 14 -> 0.45f
+                    else             -> 0.6f
+                }
+                val barData = BarData(volumeDataSet).apply {
+                    this.barWidth = barWidth
+                }
+
+                val combinedData = CombinedData().apply {
+                    setData(barData)
+                    setData(LineData(strengthDataSet))
+                }
+
+                chart.data = combinedData
+                chart.invalidate()
+            }
+        )
+    }
 }
 
-/**
- * Konfiguriert das allgemeine Aussehen des Charts (Hintergrund, Legende etc.).
- */
-private fun LineChart.configureChartStyle() {
+private fun CombinedChart.configureCombinedChartStyle() {
     setBackgroundColor(Color.TRANSPARENT)
     description.isEnabled = false
     legend.isEnabled = false
@@ -93,15 +135,12 @@ private fun LineChart.configureChartStyle() {
     setPinchZoom(true)
 }
 
-/**
- * Konfiguriert die X- und Y-Achsen des Charts.
- */
-private fun LineChart.configureAxes(
+private fun CombinedChart.configureAxes(
     xAxisTextColor: Int,
     weightTextColor: Int,
     strengthTextColor: Int,
     gridColor: Int,
-    initialStartDate: LocalDate? // Parameter geändert
+    initialStartDate: LocalDate?
 ) {
     xAxis.apply {
         position = XAxis.XAxisPosition.BOTTOM
@@ -109,8 +148,6 @@ private fun LineChart.configureAxes(
         setDrawGridLines(false)
         setDrawAxisLine(true)
         granularity = 1f
-
-        // NEUER Formatter, der mit Tagen rechnet
         valueFormatter = TimeAxisValueFormatter(initialStartDate)
     }
 
@@ -119,9 +156,6 @@ private fun LineChart.configureAxes(
         this.gridColor = gridColor
         setDrawAxisLine(false)
         axisMinimum = 0f
-
-        // HIER DIE ÄNDERUNG EINFÜGEN:
-        // Diese Zeile sorgt dafür, dass die Werte (Labels) auf der Y-Achse gezeichnet werden.
         setDrawLabels(true)
     }
 
@@ -144,18 +178,20 @@ private class TimeAxisValueFormatter(var startDate: LocalDate?) : ValueFormatter
     }
 }
 
-/**
- * Konfiguriert das Aussehen der Linie und der Datenpunkte im Graphen.
- */
 private fun LineDataSet.configureDataSetStyle(lineColor: Int, circleColor: Int) {
     this.color = lineColor
     this.lineWidth = 2.5f
-    // Zeichne die Werte (z.B. "105.5") nicht direkt in den Graphen
+    this.axisDependency = YAxis.AxisDependency.RIGHT
     setDrawValues(false)
-
-    // Style für die Kreise an den Datenpunkten
     setDrawCircles(false)
     this.circleRadius = 4f
     this.circleHoleRadius = 2f
     this.setCircleColor(circleColor)
+}
+
+private fun BarDataSet.configureDataSetStyle(color: Int) {
+    this.color = color
+    this.axisDependency = YAxis.AxisDependency.LEFT
+    this.valueTextColor = color
+    setDrawValues(false)
 }
