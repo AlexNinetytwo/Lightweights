@@ -23,5 +23,5 @@ fun calculateStrength(
     maxReps: Double,
     cutoff: Double
 ): Double {
-    return weight * strengthFromReps(reps, maxReps, cutoff)
+    return weight * strengthFromReps(reps, maxReps, cutoff) * 0.1
 }
