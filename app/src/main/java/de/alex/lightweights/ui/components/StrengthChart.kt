@@ -118,6 +118,11 @@ fun StrengthChart(
                     setData(LineData(strengthDataSet))
                 }
 
+                chart.marker = ChartMarkerView(
+                    context = chart.context,
+                    startDate = firstDate
+                )
+
                 chart.data = combinedData
                 chart.invalidate()
             }
