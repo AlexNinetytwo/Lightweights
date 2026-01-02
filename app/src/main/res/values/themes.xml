@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="Theme.Lightweights" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+    <style name="Theme.Lightweights.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
 
-    <style name="Theme.Lightweights" parent="android:Theme.Material.Light.NoActionBar" />
+        <!-- Dein App-Icon (am besten monochrom / einfach) -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+
+        <!-- Farbe des Icons (optional, wirkt bei monochromen Icons) -->
+        <item name="windowSplashScreenIconBackgroundColor">@color/splash_background</item>
+
+        <!-- Theme, das NACH dem Splash benutzt wird -->
+        <item name="postSplashScreenTheme">@style/Theme.Lightweights</item>
+    </style>
 </resources>

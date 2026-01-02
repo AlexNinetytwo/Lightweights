@@ -58,6 +58,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation("com.google.android.material:material:1.13.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("androidx.compose.foundation:foundation:1.6.0")
