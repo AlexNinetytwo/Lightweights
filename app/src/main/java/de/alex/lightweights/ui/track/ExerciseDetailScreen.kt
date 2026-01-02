@@ -152,8 +152,7 @@ fun ExerciseDetailScreen(
             }
 
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 80.dp)
+                modifier = Modifier.fillMaxSize()
             ) {
                 item {
 //                    Text("Max. relevante Wiederholungen: $maxReps")
@@ -170,6 +169,8 @@ fun ExerciseDetailScreen(
 //                        onValueChange = { cutoff = it.toDouble() },
 //                        valueRange = 0.05f..0.5f
 //                    )
+
+                    PauseTimerSection(viewModel)
 
                     FilterButtons(
                         selected = selectedFilter,
@@ -342,3 +343,68 @@ fun FilterButtons(
         Button(onClick = { onFilterSelected(TimeFilter.MONTH) }, enabled = selected != TimeFilter.MONTH) { Text("1M") }
     }
 }
+// Pausentimer
+
+@Composable
+fun PauseTimerSection(
+    viewModel: ExerciseDetailViewModel
+) {
+    val remaining by viewModel.remainingSeconds.collectAsState()
+    val isRunning by viewModel.isRunning.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+
+        Text(
+            text = "Pause",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Text(
+            text = formatTime(remaining),
+            style = MaterialTheme.typography.displaySmall,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+            Button(onClick = { viewModel.startPause(60) }) {
+                Text("60s")
+            }
+
+            Button(onClick = { viewModel.startPause(90) }) {
+                Text("90s")
+            }
+
+            Button(onClick = { viewModel.startPause(120) }) {
+                Text("120s")
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+            OutlinedButton(
+                onClick = { viewModel.pauseTimer() },
+                enabled = isRunning
+            ) {
+                Text("Pause")
+            }
+
+            OutlinedButton(onClick = { viewModel.resetTimer() }) {
+                Text("Reset")
+            }
+        }
+    }
+}
+
+fun formatTime(seconds: Int): String {
+    val min = seconds / 60
+    val sec = seconds % 60
+    return "%02d:%02d".format(min, sec)
+}
+
