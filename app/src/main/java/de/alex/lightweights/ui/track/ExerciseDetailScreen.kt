@@ -157,7 +157,8 @@ fun ExerciseDetailScreen(
             }
 
             LazyColumn(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 item {
 //                    Text("Max. relevante Wiederholungen: $maxReps")
@@ -366,11 +367,11 @@ fun PauseTimerSection(
         horizontalAlignment = Alignment.CenterHorizontally // Zentriert die Elemente
     ) {
 
-        Text(
-            text = "Pause",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.fillMaxWidth() // Füllt die Breite, damit der Text linksbündig bleibt
-        )
+//        Text(
+//            text = "Pause",
+//            style = MaterialTheme.typography.titleMedium,
+//            modifier = Modifier.fillMaxWidth() // Füllt die Breite, damit der Text linksbündig bleibt
+//        )
 
         Text(
             text = formatTime(remaining),
