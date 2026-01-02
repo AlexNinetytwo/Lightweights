@@ -10,8 +10,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.alex.lightweights.domain.model.TrainingEntry
@@ -23,6 +27,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -351,16 +356,20 @@ fun PauseTimerSection(
 ) {
     val remaining by viewModel.remainingSeconds.collectAsState()
     val isRunning by viewModel.isRunning.collectAsState()
+    // 1. Zustand für den Slider-Wert (in Sekunden), Standardwert 90s
+    var selectedPauseTime by remember { mutableIntStateOf(90) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally // Zentriert die Elemente
     ) {
 
         Text(
             text = "Pause",
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.fillMaxWidth() // Füllt die Breite, damit der Text linksbündig bleibt
         )
 
         Text(
@@ -369,33 +378,53 @@ fun PauseTimerSection(
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // 2. Text, der die ausgewählte Pausenzeit anzeigt
+        Text(
+            text = "Eingestellte Zeit: ${formatTime(selectedPauseTime)}",
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
+        )
 
-            Button(onClick = { viewModel.startPause(60) }) {
-                Text("60s")
-            }
-
-            Button(onClick = { viewModel.startPause(90) }) {
-                Text("90s")
-            }
-
-            Button(onClick = { viewModel.startPause(120) }) {
-                Text("120s")
-            }
-        }
+        // 3. Slider zur Auswahl der Pausenzeit
+        Slider(
+            value = selectedPauseTime.toFloat(),
+            onValueChange = { newValue ->
+                // Runden auf den nächsten 30er-Schritt
+                selectedPauseTime = ((newValue / 30).roundToInt() * 30)
+            },
+            valueRange = 30f..300f, // z.B. von 30s bis 5min
+            steps = 8, // (300-30) / 30 - 1 = 8 Schritte
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
 
         Spacer(Modifier.height(8.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // 4. Angepasste Buttons zum Steuern des Timers
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Neuer Button zum Starten des Timers mit dem ausgewählten Wert
+            Button(
+                onClick = { viewModel.startPause(selectedPauseTime) },
+                enabled = !isRunning, // Deaktiviert, wenn der Timer bereits läuft
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Start")
+            }
 
             OutlinedButton(
                 onClick = { viewModel.pauseTimer() },
-                enabled = isRunning
+                enabled = isRunning, // Aktiviert, nur wenn der Timer läuft
+                modifier = Modifier.weight(1f)
             ) {
-                Text("Pause")
+                Text("Stopp")
             }
 
-            OutlinedButton(onClick = { viewModel.resetTimer() }) {
+            OutlinedButton(
+                onClick = { viewModel.resetTimer() },
+                modifier = Modifier.weight(1f)
+            ) {
                 Text("Reset")
             }
         }
