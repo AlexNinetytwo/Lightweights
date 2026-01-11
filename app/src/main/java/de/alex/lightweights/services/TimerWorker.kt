@@ -27,7 +27,6 @@ class TimerWorker(private val context: Context, workerParams: WorkerParameters) 
 
         // Timer ist abgelaufen, zeige Benachrichtigung und vibriere
         showNotification()
-        vibrate()
 
         return Result.success()
     }
@@ -35,17 +34,7 @@ class TimerWorker(private val context: Context, workerParams: WorkerParameters) 
     private fun showNotification() {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Notification Channel für Android 8.0+ erstellen
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID,
-                "Pausentimer",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Benachrichtigungen für den abgelaufenen Pausentimer"
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
+        createNotificationChannel(notificationManager)
 
         val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground) // Ersetze dies durch ein passendes Icon
@@ -56,6 +45,28 @@ class TimerWorker(private val context: Context, workerParams: WorkerParameters) 
             .build()
 
         notificationManager.notify(NOTIFICATION_ID, notification)
+    }
+
+    private fun createNotificationChannel(notificationManager: NotificationManager) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            // 1. Definiere dein Vibrationsmuster
+            // Format: [Pause, Vibration, Pause, Vibration, ...]
+            val localVibrationPattern = longArrayOf(0, 400, 100, 400) // 0ms warten, 400ms vibrieren, 100ms warten, 400ms vibrieren
+
+            val channel = NotificationChannel(
+                NOTIFICATION_CHANNEL_ID,
+                "Pausentimer",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Benachrichtigungen für den abgelaufenen Pausentimer"
+
+                // 2. Aktiviere die Vibration und weise das Muster zu
+                enableVibration(true)
+                vibrationPattern = localVibrationPattern
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
     }
 
     private fun vibrate() {

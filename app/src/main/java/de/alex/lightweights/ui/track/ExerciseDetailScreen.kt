@@ -39,6 +39,8 @@ fun ExerciseDetailScreen(
     timerViewModel: TimerViewModel
 ) {
     val viewModel: ExerciseDetailViewModel = viewModel()
+    val scope = rememberCoroutineScope()
+    var selectedPauseTime by remember { mutableIntStateOf(180) }
 
     var enteredWeight by remember { mutableStateOf("") }
     var enteredReps by remember { mutableStateOf("") }
@@ -60,7 +62,6 @@ fun ExerciseDetailScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf(TimeFilter.MONTH) }
 
-    val scope = rememberCoroutineScope()
 
     var maxReps by remember { mutableDoubleStateOf(12.0) }
     var cutoff by remember { mutableDoubleStateOf(0.18) }
@@ -151,6 +152,7 @@ fun ExerciseDetailScreen(
                             enteredReps = ""
                         }
                     }
+                    timerViewModel.startPause(selectedPauseTime)
                 },
                 enabled = isValid,
                 modifier = Modifier.fillMaxWidth()
@@ -178,7 +180,11 @@ fun ExerciseDetailScreen(
 //                        valueRange = 0.05f..0.5f
 //                    )
 
-                    PauseTimerSection(timerViewModel)
+                    PauseTimerSection(
+                        viewModel = timerViewModel,
+                        selectedPauseTime = selectedPauseTime,
+                        onPauseTimeChange = { newTime -> selectedPauseTime = newTime }
+                    )
 
                     FilterButtons(
                         selected = selectedFilter,
@@ -355,12 +361,13 @@ fun FilterButtons(
 
 @Composable
 fun PauseTimerSection(
-    viewModel: TimerViewModel
+    viewModel: TimerViewModel,
+    selectedPauseTime: Int,
+    onPauseTimeChange: (Int) -> Unit
 ) {
     val remaining by viewModel.remainingSeconds.collectAsState()
     val isRunning by viewModel.isRunning.collectAsState()
     // 1. Zustand für den Slider-Wert (in Sekunden), Standardwert 90s
-    var selectedPauseTime by remember { mutableIntStateOf(90) }
 
     Column(
         modifier = Modifier
@@ -393,7 +400,7 @@ fun PauseTimerSection(
             value = selectedPauseTime.toFloat(),
             onValueChange = { newValue ->
                 // Runden auf den nächsten 30er-Schritt
-                selectedPauseTime = ((newValue / 30).roundToInt() * 30)
+                onPauseTimeChange((newValue / 30).roundToInt() * 30)
             },
             valueRange = 30f..300f, // z.B. von 30s bis 5min
             steps = 8, // (300-30) / 30 - 1 = 8 Schritte
