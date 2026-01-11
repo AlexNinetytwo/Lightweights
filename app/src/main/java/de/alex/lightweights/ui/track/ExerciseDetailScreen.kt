@@ -417,7 +417,7 @@ fun PauseTimerSection(
             }
 
             OutlinedButton(
-                onClick = { viewModel.pauseTimer() },
+                onClick = { viewModel.stopTimer() },
                 enabled = isRunning, // Aktiviert, nur wenn der Timer läuft
                 modifier = Modifier.weight(1f)
             ) {
