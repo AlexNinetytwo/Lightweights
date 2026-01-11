@@ -6,11 +6,7 @@ import androidx.lifecycle.viewModelScope
 import de.alex.lightweights.LightweightsApp
 import de.alex.lightweights.data.TrainingEntryDataSource
 import de.alex.lightweights.domain.model.TrainingEntry
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -62,41 +58,5 @@ class ExerciseDetailViewModel(
         viewModelScope.launch {
             trainingEntryDataSource.deleteEntry(entry)
         }
-    }
-
-//    Pausentimer
-
-    private var timerJob: Job? = null
-
-    private val _remainingSeconds = MutableStateFlow(0)
-    val remainingSeconds: StateFlow<Int> = _remainingSeconds
-
-    private val _isRunning = MutableStateFlow(false)
-    val isRunning: StateFlow<Boolean> = _isRunning
-
-    fun startPause(seconds: Int) {
-        timerJob?.cancel()
-
-        _remainingSeconds.value = seconds
-        _isRunning.value = true
-
-        timerJob = viewModelScope.launch {
-            while (_remainingSeconds.value > 0) {
-                delay(1_000)
-                _remainingSeconds.value--
-            }
-            _isRunning.value = false
-        }
-    }
-
-    fun pauseTimer() {
-        timerJob?.cancel()
-        _isRunning.value = false
-    }
-
-    fun resetTimer() {
-        timerJob?.cancel()
-        _remainingSeconds.value = 0
-        _isRunning.value = false
     }
 }

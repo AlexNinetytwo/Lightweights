@@ -27,6 +27,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import de.alex.lightweights.services.TimerViewModel
 import de.alex.lightweights.ui.components.BottomBar
 import de.alex.lightweights.ui.progress.ProgressScreen
 import de.alex.lightweights.ui.theme.LightweightsTheme
@@ -58,6 +59,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
+                    val timerViewModel: TimerViewModel = viewModel()
                     NavHost(
                         navController = navController,
                         startDestination = "main"
@@ -76,7 +78,8 @@ class MainActivity : ComponentActivity() {
                             ExerciseDetailScreen(
                                 exerciseId = entry.arguments!!.getString("exerciseId")!!,
                                 exerciseName = entry.arguments!!.getString("exerciseName")!!,
-                                onBack = { navController.popBackStack() }
+                                onBack = { navController.popBackStack() },
+                                timerViewModel = timerViewModel
                             )
                         }
 
@@ -125,7 +128,7 @@ fun MainScreen(navController: NavController) {
                 }
             )
         }
-    ) { padding ->   // ⬅️ DAS fehlte bei dir
+    ) { padding ->
 
         Box(
             modifier = Modifier

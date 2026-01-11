@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import de.alex.lightweights.domain.model.TrainingEntry
 import de.alex.lightweights.domain.rememberFilteredChartData
 import de.alex.lightweights.domain.TimeFilter
+import de.alex.lightweights.services.TimerViewModel
 import de.alex.lightweights.ui.components.StrengthChart
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -35,6 +36,7 @@ fun ExerciseDetailScreen(
     exerciseId: String,
     exerciseName: String,
     onBack: () -> Unit,
+    timerViewModel: TimerViewModel
 ) {
     val viewModel: ExerciseDetailViewModel = viewModel()
 
@@ -176,7 +178,7 @@ fun ExerciseDetailScreen(
 //                        valueRange = 0.05f..0.5f
 //                    )
 
-                    PauseTimerSection(viewModel)
+                    PauseTimerSection(timerViewModel)
 
                     FilterButtons(
                         selected = selectedFilter,
@@ -353,7 +355,7 @@ fun FilterButtons(
 
 @Composable
 fun PauseTimerSection(
-    viewModel: ExerciseDetailViewModel
+    viewModel: TimerViewModel
 ) {
     val remaining by viewModel.remainingSeconds.collectAsState()
     val isRunning by viewModel.isRunning.collectAsState()
